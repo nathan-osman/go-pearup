@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/jinzhu/copier"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 )
@@ -45,4 +46,20 @@ func (c *Conn) Migrate() error {
 		&Registration{},
 		&Match{},
 	).Error
+}
+
+// Transaction wraps the function in a database transaction.
+func (c *Conn) Transaction(fn func(*Conn) error) error {
+	var (
+		tx   = c.Begin()
+		conn = &Conn{}
+	)
+	copier.Copy(conn, c)
+	conn.DB = tx
+	if err := fn(conn); err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
