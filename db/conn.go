@@ -6,6 +6,9 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+
+	// Enable runtime support for Postgres
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 // Conn maintains a connection to the database.
