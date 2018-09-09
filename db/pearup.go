@@ -10,6 +10,7 @@ type Pearup struct {
 	Name       string    `gorm:"not null"`
 	EndDate    time.Time `gorm:"not null"`
 	IsComplete bool      `gorm:"not null"`
+	IsPublic   bool      `gorm:"not null"`
 }
 
 func (p *Pearup) String() string {

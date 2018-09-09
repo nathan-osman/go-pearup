@@ -6,6 +6,7 @@ type User struct {
 	FacebookID      string `gorm:"not null;unique_index"`
 	FacebookName    string `gorm:"not null"`
 	FacebookPicture string `gorm:"not null"`
+	IsAdmin         string `gorm:"not null"`
 
 	// Profile data
 	Link     string `gorm:"not null"`
