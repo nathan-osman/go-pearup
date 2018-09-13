@@ -5,6 +5,7 @@ type User struct {
 	ID              int64
 	FacebookID      string `gorm:"not null;unique_index"`
 	FacebookName    string `gorm:"not null"`
+	FacebookEmail   string `gorm:"not null"`
 	FacebookPicture string `gorm:"not null"`
 	IsAdmin         bool   `gorm:"not null"`
 

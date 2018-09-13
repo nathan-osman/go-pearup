@@ -30,6 +30,7 @@ func New(cfg *Config) *Auth {
 				ClientSecret: cfg.ClientSecret,
 				RedirectURL:  cfg.RedirectURL,
 				Endpoint:     facebookOAuth2.Endpoint,
+				Scopes:       []string{"email"},
 			},
 			log: logrus.WithField("context", "auth"),
 			loginSucceededHandler: cfg.LoginSucceededHandler,
