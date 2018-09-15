@@ -30,7 +30,7 @@ func (a *Auth) loginSucceeded(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Auth) loginFailed(w http.ResponseWriter, r *http.Request) {
-	err := gologin.ErrorFromContext(r.Context()).Error()
+	err := gologin.ErrorFromContext(r.Context())
 	r = r.WithContext(context.WithValue(r.Context(), ErrorKey, err))
 	a.loginFailedHandler.ServeHTTP(w, r)
 }
