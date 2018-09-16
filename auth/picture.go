@@ -16,7 +16,7 @@ const (
 
 // UpdatePicture updates the picture for the user represented by the context, storing it in the specified file.
 func (a *Auth) UpdatePicture(ctx context.Context, filename string) error {
-	if err := os.MkdirAll(path.Dir(filename), os.ModeDir); err != nil {
+	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
 		return err
 	}
 	f, err := os.Create(filename)
