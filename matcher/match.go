@@ -43,7 +43,6 @@ func (m *Matcher) match(conn *db.Conn, p *db.Pearup) error {
 	registrations := []*db.Registration{}
 	if err := conn.
 		Where("pearup_id = ?", p.ID).
-		Order("date").
 		Preload("User").
 		Find(&registrations).Error; err != nil {
 		return err
