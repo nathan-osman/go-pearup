@@ -2,20 +2,17 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"io"
+	"net/http"
 	"os"
 	"path"
-
-	"github.com/dghubble/gologin/oauth2"
-	"github.com/dghubble/sling"
 )
 
-const (
-	facebookAPI = "https://graph.facebook.com/v3.0/"
-)
+var errUnsupportedProvider = errors.New("provider is not yet supported")
 
-// UpdatePicture updates the picture for the user represented by the context, storing it in the specified file.
-func (a *Auth) UpdatePicture(ctx context.Context, filename string) error {
+// FetchPicture attempts to retrieve a picture using the provided context.
+func (a *Auth) FetchPicture(provider Provider, ctx context.Context, filename string) error {
 	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
 		return err
 	}
@@ -24,21 +21,24 @@ func (a *Auth) UpdatePicture(ctx context.Context, filename string) error {
 		return err
 	}
 	defer f.Close()
-	t, err := oauth2.TokenFromContext(ctx)
+	var url string
+	switch provider {
+	case ProviderFacebook:
+		u, err := a.FacebookUserPicture(ctx)
+		if err != nil {
+			return err
+		}
+		url = u
+	case ProviderGoogle:
+		url = a.GooglePicture(ctx)
+	default:
+		return errUnsupportedProvider
+	}
+	r, err := http.Get(url)
 	if err != nil {
 		return err
 	}
-	r, err := sling.New().Base(facebookAPI).Get("me/picture").Request()
-	if err != nil {
-		return err
-	}
-	resp, err := a.oauth2Config.Client(ctx, t).Do(r)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if _, err := io.Copy(f, resp.Body); err != nil {
-		return err
-	}
-	return nil
+	defer r.Body.Close()
+	_, err = io.Copy(f, r.Body)
+	return err
 }

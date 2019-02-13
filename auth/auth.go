@@ -3,54 +3,43 @@ package auth
 import (
 	"net/http"
 
-	"github.com/dghubble/gologin"
-	"github.com/dghubble/gologin/facebook"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	facebookOAuth2 "golang.org/x/oauth2/facebook"
+	googleOAuth2 "golang.org/x/oauth2/google"
+	microsoftOAuth2 "golang.org/x/oauth2/microsoft"
 )
 
-// Auth provides an interface for authenticating with a Facebook account.
+var endpoints = map[Provider]oauth2.Endpoint{
+	ProviderFacebook:  facebookOAuth2.Endpoint,
+	ProviderGoogle:    googleOAuth2.Endpoint,
+	ProviderMicrosoft: microsoftOAuth2.LiveConnectEndpoint,
+}
+
+// Auth provides an interface for authenticating with an account.
 type Auth struct {
-	oauth2Config          *oauth2.Config
-	log                   *logrus.Entry
+	oauth2Configs         map[Provider]*oauth2.Config
 	loginSucceededHandler http.Handler
 	loginFailedHandler    http.Handler
-
-	LoginHandler    http.Handler
-	CallbackHandler http.Handler
+	log                   *logrus.Entry
 }
 
 // New creates a new Auth instance with the specified configuration.
 func New(cfg *Config) *Auth {
-	var (
-		a = &Auth{
-			oauth2Config: &oauth2.Config{
-				ClientID:     cfg.ClientID,
-				ClientSecret: cfg.ClientSecret,
-				RedirectURL:  cfg.RedirectURL,
-				Endpoint:     facebookOAuth2.Endpoint,
-				Scopes:       []string{"email"},
-			},
-			log: logrus.WithField("context", "auth"),
-			loginSucceededHandler: cfg.LoginSucceededHandler,
-			loginFailedHandler:    cfg.LoginFailedHandler,
+	a := &Auth{
+		oauth2Configs:         make(map[Provider]*oauth2.Config),
+		loginSucceededHandler: cfg.LoginSucceededHandler,
+		loginFailedHandler:    cfg.LoginFailedHandler,
+		log:                   logrus.WithField("context", "auth"),
+	}
+	for k, v := range cfg.ProviderConfigs {
+		a.oauth2Configs[k] = &oauth2.Config{
+			ClientID:     v.ClientID,
+			ClientSecret: v.ClientSecret,
+			RedirectURL:  v.RedirectURL,
+			Endpoint:     endpoints[k],
+			Scopes:       []string{"email"},
 		}
-	)
-	a.LoginHandler = facebook.StateHandler(
-		gologin.DebugOnlyCookieConfig,
-		facebook.LoginHandler(
-			a.oauth2Config,
-			http.HandlerFunc(a.loginFailed),
-		),
-	)
-	a.CallbackHandler = facebook.StateHandler(
-		gologin.DebugOnlyCookieConfig,
-		facebook.CallbackHandler(
-			a.oauth2Config,
-			http.HandlerFunc(a.loginSucceeded),
-			http.HandlerFunc(a.loginFailed),
-		),
-	)
+	}
 	return a
 }

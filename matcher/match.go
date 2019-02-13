@@ -108,8 +108,8 @@ outer:
 			if !isValidMatch(u.ID, smaller[i].ID) {
 				m.log.Infof(
 					"%s & %s have already been paired",
-					u.FacebookName,
-					smaller[i].FacebookName,
+					u.Name,
+					smaller[i].Name,
 				)
 				continue outer
 			}
