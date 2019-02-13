@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-// Config stores configuration information for Facebook authentication.
+// Config stores configuration information for authentication.
 type Config struct {
-	ClientID              string
-	ClientSecret          string
-	RedirectURL           string
-	LoginSucceededHandler http.Handler
-	LoginFailedHandler    http.Handler
+	FacebookClientID              string
+	FacebookClientSecret          string
+	FacebookRedirectURL           string
+	FacebookLoginSucceededHandler http.Handler
+	FacebookLoginFailedHandler    http.Handler
 }

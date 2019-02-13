@@ -2,12 +2,20 @@ package db
 
 // User represents an authenticated Facebook user.
 type User struct {
-	ID              int64
-	FacebookID      string `gorm:"not null;unique_index"`
-	FacebookName    string `gorm:"not null"`
-	FacebookEmail   string `gorm:"not null"`
-	FacebookPicture string `gorm:"not null"`
-	IsAdmin         bool   `gorm:"not null"`
+	ID int64
+
+	// Each user authenticates with one or more of these services
+	GoogleID    string
+	FacebookID  string
+	MicrosoftID string
+
+	// This data is filled in with the most recent login method
+	Name    string `gorm:"not null"`
+	Email   string
+	Picture string
+
+	// Management data
+	IsAdmin bool `gorm:"not null"`
 
 	// Profile data
 	Link     string `gorm:"not null"`
@@ -16,5 +24,5 @@ type User struct {
 }
 
 func (u *User) String() string {
-	return u.FacebookName
+	return u.Name
 }
