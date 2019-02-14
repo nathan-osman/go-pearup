@@ -61,7 +61,9 @@ func (f *Facebook) User(ctx context.Context) (*User, error) {
 	var (
 		client = f.config.Client(ctx, t)
 		p      = &struct {
-			URL string `json:"url"`
+			Data struct {
+				URL string `json:"url"`
+			} `json:"data"`
 		}{}
 	)
 	_, err = sling.
@@ -78,6 +80,6 @@ func (f *Facebook) User(ctx context.Context) (*User, error) {
 		ID:      u.ID,
 		Name:    u.Name,
 		Email:   u.Email,
-		Picture: p.URL,
+		Picture: p.Data.URL,
 	}, nil
 }
