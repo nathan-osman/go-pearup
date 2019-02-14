@@ -8,54 +8,59 @@ import (
 	"github.com/dghubble/gologin/facebook"
 	"github.com/dghubble/gologin/oauth2"
 	"github.com/dghubble/sling"
+	oauth2Facebook "golang.org/x/oauth2/facebook"
 )
 
 const facebookAPI = "https://graph.facebook.com/v3.0/"
 
-// FacebookUserKey provides access to the Facebook user object in a request.
-const FacebookUserKey = "facebook"
-
-func (a *Auth) facebookLoginSucceeded(w http.ResponseWriter, r *http.Request) {
-	fbUser, err := facebook.UserFromContext(r.Context())
-	if err != nil {
-		a.loginFailedHandler.ServeHTTP(w, withContext(r, ErrorKey, err))
-		return
-	}
-	a.loginSucceededHandler.ServeHTTP(w, withContext(r, FacebookUserKey, fbUser))
+// Facebook provides a Provider implementation for Facebook auth.
+type Facebook struct {
+	providerData
 }
 
-// FacebookLoginHandler returns an HTTP handler for beginning Facebook auth.
-func (a *Auth) FacebookLoginHandler() http.Handler {
+func NewFacebook(cfg *Config) *Facebook {
+	f := &Facebook{}
+	f.init(f, cfg, oauth2Facebook.Endpoint)
+	return f
+}
+
+func (f *Facebook) Name() string {
+	return "facebook"
+}
+
+func (f *Facebook) LoginHandler() http.Handler {
 	return facebook.StateHandler(
 		gologin.DebugOnlyCookieConfig,
 		facebook.LoginHandler(
-			a.oauth2Configs[ProviderFacebook],
-			http.HandlerFunc(a.loginFailed),
+			f.config,
+			f.errorHandler,
 		),
 	)
 }
 
-// FacebookCallbackHandler returns an HTTP handler for completing Facebook auth.
-func (a *Auth) FacebookCallbackHandler() http.Handler {
+func (f *Facebook) CallbackHandler() http.Handler {
 	return facebook.StateHandler(
 		gologin.DebugOnlyCookieConfig,
 		facebook.CallbackHandler(
-			a.oauth2Configs[ProviderFacebook],
-			http.HandlerFunc(a.facebookLoginSucceeded),
-			http.HandlerFunc(a.loginFailed),
+			f.config,
+			f.successHandler,
+			f.errorHandler,
 		),
 	)
 }
 
-// FacebookUserPicture retrieves the URL of a Facebook user's picture.
-func (a *Auth) FacebookUserPicture(ctx context.Context) (string, error) {
+func (f *Facebook) User(ctx context.Context) (*User, error) {
+	u, err := facebook.UserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	t, err := oauth2.TokenFromContext(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	var (
-		client  = a.oauth2Configs[ProviderFacebook].Client(ctx, t)
-		picture = &struct {
+		client = f.config.Client(ctx, t)
+		p      = &struct {
 			URL string `json:"url"`
 		}{}
 	)
@@ -65,6 +70,14 @@ func (a *Auth) FacebookUserPicture(ctx context.Context) (string, error) {
 		Base(facebookAPI).
 		Set("Accept", "application/json").
 		Get("me/picture").
-		ReceiveSuccess(picture)
-	return picture.URL, err
+		ReceiveSuccess(p)
+	if err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:      u.ID,
+		Name:    u.Name,
+		Email:   u.Email,
+		Picture: p.URL,
+	}, nil
 }

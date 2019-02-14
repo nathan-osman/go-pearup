@@ -5,14 +5,13 @@ type User struct {
 	ID int64
 
 	// Each user authenticates with one or more of these services
-	GoogleID    string
-	FacebookID  string
-	MicrosoftID string
+	GoogleID   string
+	FacebookID string
 
 	// This data is filled in with the most recent login method
 	Name    string `gorm:"not null"`
-	Email   string
-	Picture string
+	Email   string `gorm:"not null"`
+	Picture string `gorm:"not null"`
 
 	// Management data
 	IsAdmin bool `gorm:"not null"`

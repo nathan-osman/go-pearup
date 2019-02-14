@@ -6,45 +6,54 @@ import (
 
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/google"
-	"google.golang.org/api/oauth2/v2"
+	oauth2Google "golang.org/x/oauth2/facebook"
 )
 
-// GoogleUserKey provides access to the Google user object in a request.
-const GoogleUserKey = "google"
-
-func (a *Auth) googleLoginSucceeded(w http.ResponseWriter, r *http.Request) {
-	gUser, err := google.UserFromContext(r.Context())
-	if err != nil {
-		a.loginFailedHandler.ServeHTTP(w, withContext(r, ErrorKey, err))
-		return
-	}
-	a.loginSucceededHandler.ServeHTTP(w, withContext(r, GoogleUserKey, gUser))
+// Google provides a Provider implementation for Google auth.
+type Google struct {
+	providerData
 }
 
-// GoogleLoginHandler returns an HTTP handler for beginning Google auth.
-func (a *Auth) GoogleLoginHandler() http.Handler {
+func NewGoogle(cfg *Config) *Google {
+	g := &Google{}
+	g.init(g, cfg, oauth2Google.Endpoint)
+	return g
+}
+
+func (g *Google) Name() string {
+	return "google"
+}
+
+func (g *Google) LoginHandler() http.Handler {
 	return google.StateHandler(
 		gologin.DebugOnlyCookieConfig,
 		google.LoginHandler(
-			a.oauth2Configs[ProviderGoogle],
-			http.HandlerFunc(a.loginFailed),
+			g.config,
+			g.errorHandler,
 		),
 	)
 }
 
-// GoogleCallbackHandler returns an HTTP handler for completing Google auth.
-func (a *Auth) GoogleCallbackHandler() http.Handler {
+func (g *Google) CallbackHandler() http.Handler {
 	return google.StateHandler(
 		gologin.DebugOnlyCookieConfig,
 		google.CallbackHandler(
-			a.oauth2Configs[ProviderGoogle],
-			http.HandlerFunc(a.googleLoginSucceeded),
-			http.HandlerFunc(a.loginFailed),
+			g.config,
+			g.successHandler,
+			g.errorHandler,
 		),
 	)
 }
 
-// GooglePicture retrieves the URL of the user's picture.
-func (a *Auth) GooglePicture(ctx context.Context) string {
-	return ctx.Value(GoogleUserKey).(*oauth2.Userinfoplus).Picture
+func (g *Google) User(ctx context.Context) (*User, error) {
+	u, err := google.UserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:      u.Id,
+		Name:    u.Name,
+		Email:   u.Email,
+		Picture: u.Picture,
+	}, nil
 }
