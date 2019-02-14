@@ -5,8 +5,8 @@ type User struct {
 	ID int64
 
 	// Each user authenticates with one or more of these services
-	GoogleID   string
-	FacebookID string
+	GoogleID   string `gorm:"not null"`
+	FacebookID string `gorm:"not null"`
 
 	// This data is filled in with the most recent login method
 	Name    string `gorm:"not null"`
