@@ -69,7 +69,7 @@ func (f *Facebook) User(ctx context.Context) (*User, error) {
 		Client(client).
 		Base(facebookAPI).
 		Set("Accept", "application/json").
-		Get("me/picture").
+		Get("me/picture?redirect=false").
 		ReceiveSuccess(p)
 	if err != nil {
 		return nil, err
