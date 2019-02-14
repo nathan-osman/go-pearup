@@ -6,7 +6,7 @@ import (
 
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/google"
-	oauth2Google "golang.org/x/oauth2/facebook"
+	oauth2Google "golang.org/x/oauth2/google"
 )
 
 // Google provides a Provider implementation for Google auth.
