@@ -4,11 +4,18 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/dghubble/gologin"
 	"golang.org/x/oauth2"
 )
 
-// ProviderKey provides access to the Provider interface upon successful auth.
-const ProviderKey = "provider"
+const (
+
+	// ProviderKey provides access to the Provider interface upon successful auth.
+	ProviderKey = "provider"
+
+	// ErrorKey provides access to the error message when auth fails.
+	ErrorKey = "error"
+)
 
 // Provider implements authentication for a specific provider.
 type Provider interface {
@@ -44,5 +51,8 @@ func (p *providerData) init(provider Provider, cfg *Config, endpoint oauth2.Endp
 		r = r.WithContext(context.WithValue(r.Context(), ProviderKey, provider))
 		cfg.SuccessHandler.ServeHTTP(w, r)
 	})
-	p.errorHandler = cfg.ErrorHandler
+	p.errorHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r = r.WithContext(context.WithValue(r.Context(), ErrorKey, gologin.ErrorFromContext(r.Context())))
+		cfg.ErrorHandler.ServeHTTP(w, r)
+	})
 }
